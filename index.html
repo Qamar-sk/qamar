@@ -1525,6 +1525,7 @@ footer{background:rgba(4,5,15,.98);border-top:1px solid var(--border);padding:40
     <button class="sp-tab" onclick="spTab('cards',this)">🃏 الكروت</button>
     <button class="sp-tab" onclick="spTab('subs',this)">📦 الخدمات</button>
     <button class="sp-tab" onclick="spTab('contact',this)">📞 التواصل</button>
+    <button class="sp-tab" onclick="spTab('categories',this)">🗂️ الأقسام</button>
     <button class="sp-tab" onclick="spTab('customers',this)">👥 الزبائن</button>
     <button class="sp-tab" onclick="spTab('backup',this)">💾 النسخ</button>
   </div>
@@ -1752,6 +1753,28 @@ footer{background:rgba(4,5,15,.98);border-top:1px solid var(--border);padding:40
             <div class="sf"><label class="sl">✈️ تيليغرام</label><input class="si" id="sc-tg" type="url" placeholder="https://t.me/username" oninput="liveSocial()"></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="sp-panel" id="panel-categories">
+      <div class="sp-intro">أضف أو عدّل أو رتّب أقسام المتجر. القسم "الكل" ثابت ولا يمكن حذفه. التغييرات تنعكس فوراً على الشاشة الرئيسية.</div>
+      <div class="sp-block">
+        <div class="sp-block-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>🗂️ الأقسام الحالية</span>
+          <span id="cats-count" style="font-size:.72rem;color:var(--cyan);background:rgba(0,229,255,.08);padding:3px 10px;border-radius:20px;border:1px solid rgba(0,229,255,.2)">0 قسم</span>
+        </div>
+        <div id="cats-list" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
+      </div>
+      <div class="sp-block" style="margin-top:12px">
+        <div class="sp-block-title">➕ إضافة قسم جديد</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div class="sf"><label class="sl">المفتاح (بالإنجليزية)</label><input class="si" id="cat-new-key" placeholder="مثال: cloud" autocomplete="off"></div>
+          <div class="sf"><label class="sl">الأيقونة</label><input class="si" id="cat-new-img" placeholder="🖥️" maxlength="4" style="font-size:1.4rem;text-align:center"></div>
+          <div class="sf"><label class="sl">العنوان الرئيسي</label><input class="si" id="cat-new-title" placeholder="الخدمات السحابية"></div>
+          <div class="sf"><label class="sl">العنوان الفرعي</label><input class="si" id="cat-new-sub" placeholder="اشتراكات"></div>
+        </div>
+        <button class="sbn" onclick="addCat()" style="margin-top:10px;width:100%">➕ إضافة القسم</button>
       </div>
     </div>
 
@@ -2015,6 +2038,7 @@ function applyStateObj(st){
   try{
     if(st.DATA&&st.DATA.length) DATA=st.DATA;
     if(st.CL) for(var k in st.CL) CL[k]=st.CL[k];
+    loadCats(st);
     var s=st.settings||{};
     function sv(id,val){ var el=G(id); if(el&&val!==undefined&&val!=='') el.value=val; }
     if(IS_ADMIN){
@@ -2096,7 +2120,10 @@ function toast(m){
   t._t = setTimeout(function(){ t.classList.remove('on'); }, 2400);
 }
 function s5(r){ return '★'.repeat(Math.round(r)) + '☆'.repeat(5-Math.round(r)); }
-function catL(c){ return {ai:'🤖 ذكاء اصطناعي',streaming:'🎬 ترفيه',design:'🎨 تصميم',social:'📱 تواصل',music:'🎵 موسيقى',gaming:'🎮 ألعاب'}[c] || c; }
+function catL(c){
+  for(var i=0;i<CATS.length;i++) if(CATS[i].key===c) return CATS[i].img+' '+CATS[i].title;
+  return c;
+}
 function badC(b){ return {hot:'cbg-hot',pop:'cbg-pop',new:'cbg-new',deal:'cbg-deal'}[b] || 'cbg-deal'; }
 function fmt(n){ return (n||0).toLocaleString('ar') + ' د.ل'; }
 function getLogo(sub){
@@ -3284,6 +3311,7 @@ function spTab(name, el){
   if(name==='subs') buildSubList();
   if(name==='backup') updateLSI();
   if(name==='customers') renderCustomerList();
+  if(name==='categories') renderCatSettings();
 }
 
 /* ════════════════════════
@@ -3499,6 +3527,11 @@ function openSubEdit(id){
   G('se-title').textContent=isNew?'➕ إضافة خدمة':'✏️ تعديل: '+sub.name;
   G('se-name').value=sub.name||'';
   var ss=sub.nameFontSize||22; G('se-name-size').value=ss; G('se-ns-v').textContent=ss+'px'; G('se-name').style.fontSize=ss+'px';
+  /* populate category select dynamically */
+  var catSel=G('se-cat');
+  catSel.innerHTML=CATS.filter(function(c){ return c.key!=='all'; }).map(function(c){
+    return '<option value="'+c.key+'">'+c.img+' '+c.title+'</option>';
+  }).join('');
   G('se-cat').value=sub.cat||'ai'; G('se-desc').value=sub.desc||''; G('se-feats').value=(sub.feats||[]).join('\n');
   G('se-badge').value=sub.badge||'pop'; G('se-btxt').value=sub.bTxt||''; G('se-rating').value=sub.rating||4.5; G('se-reviews').value=sub.rev||0; G('se-bgcolor').value=sub.bgColor||'#6c2bd9';
   if(G('se-avail')) G('se-avail').value=sub.availability||'available';
@@ -3598,7 +3631,7 @@ function duplicateSub(id){
 function saveAll(showToast){
   if(!IS_ADMIN) return; /* الزبائن لا يحفظون شيئاً */
   try{
-    var s={DATA:DATA, CL:CL, settings:{
+    var s={DATA:DATA, CL:CL, CATS:CATS, settings:{
       siteName:G('sg-name').value, footerDesc:G('sg-desc').value, offerText:G('sg-offer').value,
       badge:G('sh-badge').value, tagline:G('sh-tagline').value, btn1:G('sh-btn1').value, btn2:G('sh-btn2').value, c1:G('sh-c1').value, c3:G('sh-c3').value,
       waPhone:G('sc-wa').value, ctaTitle:G('sc-ctatitle').value, ctaSub:G('sc-ctasub').value,
@@ -3653,6 +3686,115 @@ function loadAll(){
     return false;
   }
 }
+/* ════════════════════════
+   CATEGORY MANAGEMENT
+════════════════════════ */
+function renderCatSettings(){
+  var el=G('cats-list'); if(!el) return;
+  var cnt=G('cats-count'); if(cnt) cnt.textContent=(CATS.length-1)+' قسم';
+  var h='';
+  for(var i=0;i<CATS.length;i++){
+    var c=CATS[i];
+    var isAll=c.key==='all';
+    var count=DATA.filter(function(s){ return s.cat===c.key; }).length;
+    h+='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px" data-cat-idx="'+i+'">'
+      /* drag handle */
+      +(isAll?'<span style="font-size:1rem;flex-shrink:0;opacity:.3">⠿</span>':'<span style="font-size:1rem;cursor:grab;flex-shrink:0;color:var(--muted)" class="cat-drag-handle" draggable="false">⠿</span>')
+      /* icon */
+      +'<span style="font-size:1.4rem;flex-shrink:0">'+c.img+'</span>'
+      /* info */
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-weight:700;font-size:.82rem;color:var(--txt)">'+c.title+'</div>'
+      +'<div style="font-size:.68rem;color:var(--muted)">'+c.sub+' · '+count+' خدمة · <code style="font-size:.65rem;color:var(--cyan)">'+c.key+'</code></div>'
+      +'</div>'
+      /* edit inputs */
+      +(isAll?'<span style="font-size:.7rem;color:var(--muted)">ثابت</span>'
+        :'<div style="display:flex;gap:5px;align-items:center;flex-shrink:0">'
+        +'<input class="si" value="'+c.img+'" onchange="updateCat('+i+',\'img\',this.value)" maxlength="4" style="width:42px;text-align:center;font-size:1.1rem;padding:4px">'
+        +'<input class="si" value="'+c.title+'" onchange="updateCat('+i+',\'title\',this.value)" style="width:100px;font-size:.72rem;padding:4px">'
+        +'<input class="si" value="'+c.sub+'" onchange="updateCat('+i+',\'sub\',this.value)" style="width:70px;font-size:.72rem;padding:4px">'
+        +'<button onclick="deleteCat('+i+')" style="width:28px;height:28px;border-radius:50%;background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.25);color:var(--red);font-size:.8rem;cursor:pointer;flex-shrink:0">✕</button>'
+        +'</div>')
+      +'</div>';
+  }
+  el.innerHTML=h;
+  initCatDrag(el);
+}
+
+function updateCat(idx, field, val){
+  if(!CATS[idx]) return;
+  CATS[idx][field]=val.trim();
+  buildCatChips(); renderCards();
+  saveCats();
+}
+
+function addCat(){
+  var key=(G('cat-new-key').value||'').trim().toLowerCase().replace(/\s+/g,'-');
+  var img=(G('cat-new-img').value||'📦').trim();
+  var title=(G('cat-new-title').value||'').trim();
+  var sub=(G('cat-new-sub').value||'اشتراكات').trim();
+  if(!key){ toast('⚠️ أدخل المفتاح'); return; }
+  if(!title){ toast('⚠️ أدخل العنوان'); return; }
+  for(var i=0;i<CATS.length;i++) if(CATS[i].key===key){ toast('⚠️ المفتاح موجود مسبقاً'); return; }
+  CATS.push({key:key,img:img,sub:sub,title:title});
+  G('cat-new-key').value=''; G('cat-new-img').value=''; G('cat-new-title').value=''; G('cat-new-sub').value='';
+  buildCatChips(); renderCards(); renderCatSettings(); saveCats();
+  toast('✅ تم إضافة القسم: '+title);
+}
+
+function deleteCat(idx){
+  if(!CATS[idx]||CATS[idx].key==='all') return;
+  var name=CATS[idx].title;
+  if(!confirm('حذف قسم "'+name+'"؟ الخدمات المرتبطة به تبقى لكن لن تُصنَّف.')) return;
+  CATS.splice(idx,1);
+  buildCatChips(); renderCards(); renderCatSettings(); saveCats();
+  toast('🗑️ تم حذف القسم: '+name);
+}
+
+function saveCats(){
+  try{
+    var raw=localStorage.getItem(STORE_KEY); var st=raw?JSON.parse(raw):{};
+    st.CATS=CATS; localStorage.setItem(STORE_KEY,JSON.stringify(st));
+    pushToCloud(st);
+  }catch(e){}
+}
+
+function loadCats(st){
+  if(st&&st.CATS&&st.CATS.length){
+    /* always keep 'all' first */
+    var hasAll=st.CATS.find(function(c){ return c.key==='all'; });
+    if(hasAll) CATS=st.CATS;
+    else CATS=[{key:'all',img:'🌐',sub:'جميع',title:'الاشتراكات'}].concat(st.CATS);
+  }
+}
+
+function initCatDrag(container){
+  var items=container.querySelectorAll('[data-cat-idx]');
+  var dragFrom=null;
+  items.forEach(function(item){
+    var handle=item.querySelector('.cat-drag-handle');
+    if(!handle) return;
+    handle.setAttribute('draggable','true');
+    handle.addEventListener('dragstart',function(e){
+      dragFrom=parseInt(item.getAttribute('data-cat-idx'));
+      e.dataTransfer.effectAllowed='move';
+      item.style.opacity='.4';
+    });
+    handle.addEventListener('dragend',function(){ item.style.opacity=''; });
+    item.addEventListener('dragover',function(e){ e.preventDefault(); item.style.outline='2px solid var(--cyan)'; });
+    item.addEventListener('dragleave',function(){ item.style.outline=''; });
+    item.addEventListener('drop',function(e){
+      e.preventDefault(); item.style.outline='';
+      var toIdx=parseInt(item.getAttribute('data-cat-idx'));
+      if(dragFrom===null||dragFrom===toIdx||dragFrom===0||toIdx===0) return;
+      var moved=CATS.splice(dragFrom,1)[0];
+      CATS.splice(toIdx,0,moved);
+      buildCatChips(); renderCatSettings(); saveCats();
+      toast('✅ تم تغيير ترتيب الأقسام');
+    });
+  });
+}
+
 function updateLSI(){ try{ var raw=localStorage.getItem(STORE_KEY); G('last-save-info').textContent=raw?'بيانات محفوظة ✅':'لا توجد بيانات محفوظة'; }catch(e){ G('last-save-info').textContent='التخزين غير متاح'; } }
 
 function getShareLink(){
