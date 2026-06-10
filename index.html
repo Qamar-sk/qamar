@@ -1708,17 +1708,26 @@ footer{background:rgba(4,5,15,.98);border-top:1px solid var(--border);padding:40
               <div style="font-weight:700;font-size:.84rem;color:var(--txt)">🖼️ صورة مخصصة</div>
               <div style="font-size:.72rem;color:var(--muted);margin-top:2px">استخدم صورة جاهزة صممتها مسبقاً — تُحفظ وتُرسل عند الضغط</div>
               <div id="custom-img-area" style="margin-top:10px;display:none">
+                <!-- service selector -->
+                <div class="sf" style="margin-bottom:8px">
+                  <label class="sl">الخدمة المرتبطة بالصورة</label>
+                  <select class="sse" id="custom-img-service" onchange="onCustomImgServiceChange()" style="width:100%">
+                    <option value="">— اختر خدمة —</option>
+                  </select>
+                </div>
                 <div id="custom-img-preview" style="display:none;margin-bottom:8px;text-align:center">
-                  <img id="custom-img-thumb" style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid var(--border)" src="">
+                  <img id="custom-img-thumb" style="max-width:100%;max-height:180px;border-radius:10px;border:1px solid var(--border)" src="">
                   <div style="font-size:.7rem;color:var(--muted);margin-top:4px" id="custom-img-name"></div>
                 </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
                   <label class="sbn" style="padding:8px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
                     📁 اختر صورة
                     <input type="file" accept="image/*" id="custom-img-input" onchange="loadCustomImg(this)" style="display:none">
                   </label>
                   <button class="sbd" id="custom-img-clear" onclick="clearCustomImg()" style="padding:8px 14px;display:none">🗑️ حذف</button>
                 </div>
+                <!-- list of services with custom images -->
+                <div id="custom-imgs-list" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
               </div>
             </div>
           </label>
@@ -2740,21 +2749,22 @@ function saveCardImage(id){
 
   /* custom image mode */
   if(SAVE_MODE==='custom'){
-    if(!CUSTOM_IMG_DATA){ toast('⚠️ لم يتم رفع صورة مخصصة بعد — اذهب للإعدادات ← الكاردات'); return; }
+    var ci=CUSTOM_IMGS[id];
+    if(!ci){ toast('⚠️ لا توجد صورة مخصصة لهذه الخدمة — اذهب للإعدادات ← الكاردات'); return; }
     var safeName2=(s.name||'card').replace(/\s+/g,'-');
     var isIOS2=/iPad|iPhone|iPod/.test(navigator.userAgent);
     if(isIOS2&&navigator.share){
-      fetch(CUSTOM_IMG_DATA).then(function(r){ return r.blob(); }).then(function(blob){
+      fetch(ci.data).then(function(r){ return r.blob(); }).then(function(blob){
         var file=new File([blob],'qamar-'+safeName2+'.png',{type:'image/png'});
         if(navigator.canShare&&navigator.canShare({files:[file]})){
           navigator.share({files:[file],title:s.name}).then(function(){ toast('💾 تم حفظ الصورة'); }).catch(function(){});
         } else {
-          var w=window.open('','_blank'); if(w){ w.document.write('<img src="'+CUSTOM_IMG_DATA+'" style="max-width:100%">'); w.document.close(); }
+          var w=window.open('','_blank'); if(w){ w.document.write('<img src="'+ci.data+'" style="max-width:100%">'); w.document.close(); }
           toast('💾 اضغط مطولاً للحفظ');
         }
       });
     } else {
-      var a2=document.createElement('a'); a2.download='qamar-'+safeName2+'.png'; a2.href=CUSTOM_IMG_DATA; a2.click();
+      var a2=document.createElement('a'); a2.download='qamar-'+safeName2+'.png'; a2.href=ci.data; a2.click();
       toast('💾 تم تنزيل الصورة المخصصة');
     }
     return;
@@ -2851,7 +2861,11 @@ function saveCardImage(id){
     if(isCard&&s.cardPrices&&s.cardPrices.length) plans=s.cardPrices;
     else if(s.monthlyPrices&&s.monthlyPrices.length) plans=s.monthlyPrices;
     var feats2=s.feats||[];
-    var maxP=Math.min(plans.length,3);
+    var maxP=plans.length; /* كل الباقات بدون حد */
+
+    /* layout: صف واحد إذا ≤4، صفين إذا >4 */
+    var planRows=maxP>4?2:1;
+    var plansPerRow=planRows===2?Math.ceil(maxP/2):maxP;
 
     /* two-pass: measure at sc=1, then compute real sc */
     var startY=lcy+lr3;
@@ -2863,11 +2877,11 @@ function saveCardImage(id){
       var dg=g*.8;
       var dL2=desc2?wrapText(ctx,desc2,Math.round(dFS)+'px Tajawal,Arial',W-180):[];
       var h=0;
-      h+=Math.round(g*.8);                          /* top gap */
-      h+=Math.round(nFS*1.05)+Math.round(g*.3);     /* name */
-      h+=Math.round(cFS*1.2);                        /* cat */
-      h+=Math.round(rFS*1.2)+dg;                    /* rating */
-      h+=dg+Math.round(sFS*1.3)+bH+dg;             /* plans */
+      h+=Math.round(g*.8);
+      h+=Math.round(nFS*1.05)+Math.round(g*.3);
+      h+=Math.round(cFS*1.2);
+      h+=Math.round(rFS*1.2)+dg;
+      h+=dg+Math.round(sFS*1.3)+bH*planRows+(planRows>1?Math.round(g*.5):0)+dg;
       if(desc2) h+=dg+Math.round(sFS*1.3)+(dL2.length*Math.round(dLH)+Math.round(32*s_))+dg;
       var fc=Math.min((s.feats||[]).length,5);
       if(fc) h+=dg+Math.round(sFS*1.3)+fc*Math.round(fSt);
@@ -2917,31 +2931,37 @@ function saveCardImage(id){
     /* ── plans ── */
     divLine(nextY); nextY+=divGap;
     secLbl('باقات الاشتراك', nextY, secFS); nextY+=Math.round(secFS*1.3);
-    var gap2=Math.round(18*sc);
-    var bw3=(W-160-(maxP-1)*gap2)/Math.max(maxP,1), br3=22;
-    plans.slice(0,maxP).forEach(function(p,i){
-      var bx3=W-80-(i+1)*(bw3+gap2)+gap2;
-      roundRect(ctx,bx3,nextY,bw3,planBH,br3);
-      ctx.fillStyle=i===0?'rgba('+ac.r+','+ac.g+','+ac.b+',.3)':'rgba(13,8,40,.85)'; ctx.fill();
-      ctx.strokeStyle=i===0?'rgba('+ac.r+','+ac.g+','+ac.b+',.85)':'rgba('+ac.r+','+ac.g+','+ac.b+',.25)'; ctx.lineWidth=3; ctx.stroke();
-      var lb=isCard?(p.name||'كرت'):(p.months===1?'شهري':p.months===12?'سنوي':p.months+' أشهر');
-      ctx.font='bold '+planLbFS+'px Tajawal,Arial'; ctx.fillStyle='#9878cc'; ctx.textAlign='center';
-      ctx.fillText(lb, bx3+bw3/2, nextY+Math.round(planBH*.1));
-      if(p.orig&&p.orig>p.price){
-        ctx.font=planOrigFS+'px Tajawal,Arial'; ctx.fillStyle='rgba(255,80,80,.8)';
-        var ox=bx3+bw3/2, oy=nextY+Math.round(planBH*.38);
-        ctx.fillText(p.orig+' د.ل', ox, oy);
-        var tw=ctx.measureText(p.orig+' د.ل').width;
-        ctx.save(); ctx.strokeStyle='rgba(255,80,80,.8)'; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.moveTo(ox-tw/2-4,oy+Math.round(planOrigFS*.55)); ctx.lineTo(ox+tw/2+4,oy+Math.round(planOrigFS*.55)); ctx.stroke(); ctx.restore();
-        ctx.font='bold '+planPrFS+'px Tajawal,Arial'; ctx.fillStyle='#ffffff';
-        ctx.fillText((p.price||0)+' د.ل', bx3+bw3/2, nextY+Math.round(planBH*.6));
-      } else {
-        ctx.font='bold '+planPrFS+'px Tajawal,Arial'; ctx.fillStyle='#ffffff';
-        ctx.fillText((p.price||0)+' د.ل', bx3+bw3/2, nextY+Math.round(planBH*.38));
-      }
-    });
-    nextY+=planBH+divGap;
+    var gap2=Math.round(14*sc);
+    var bw3=(W-160-(plansPerRow-1)*gap2)/Math.max(plansPerRow,1), br3=22;
+    for(var ri=0;ri<planRows;ri++){
+      var rowPlans=plans.slice(ri*plansPerRow,(ri+1)*plansPerRow);
+      var rowCount=rowPlans.length;
+      var rowBw=(W-160-(rowCount-1)*gap2)/Math.max(rowCount,1);
+      rowPlans.forEach(function(p,i){
+        var bx3=W-80-(i+1)*(rowBw+gap2)+gap2;
+        roundRect(ctx,bx3,nextY,rowBw,planBH,br3);
+        ctx.fillStyle=i===0&&ri===0?'rgba('+ac.r+','+ac.g+','+ac.b+',.3)':'rgba(13,8,40,.85)'; ctx.fill();
+        ctx.strokeStyle=i===0&&ri===0?'rgba('+ac.r+','+ac.g+','+ac.b+',.85)':'rgba('+ac.r+','+ac.g+','+ac.b+',.25)'; ctx.lineWidth=3; ctx.stroke();
+        var lb=isCard?(p.name||'كرت'):(p.months===1?'شهري':p.months===12?'سنوي':p.months+' أشهر');
+        ctx.font='bold '+planLbFS+'px Tajawal,Arial'; ctx.fillStyle='#9878cc'; ctx.textAlign='center';
+        ctx.fillText(lb, bx3+rowBw/2, nextY+Math.round(planBH*.1));
+        if(p.orig&&p.orig>p.price){
+          ctx.font=planOrigFS+'px Tajawal,Arial'; ctx.fillStyle='rgba(255,80,80,.8)';
+          var ox=bx3+rowBw/2, oy=nextY+Math.round(planBH*.38);
+          ctx.fillText(p.orig+' د.ل', ox, oy);
+          var tw=ctx.measureText(p.orig+' د.ل').width;
+          ctx.save(); ctx.strokeStyle='rgba(255,80,80,.8)'; ctx.lineWidth=2.5;
+          ctx.beginPath(); ctx.moveTo(ox-tw/2-4,oy+Math.round(planOrigFS*.55)); ctx.lineTo(ox+tw/2+4,oy+Math.round(planOrigFS*.55)); ctx.stroke(); ctx.restore();
+          ctx.font='bold '+planPrFS+'px Tajawal,Arial'; ctx.fillStyle='#ffffff';
+          ctx.fillText((p.price||0)+' د.ل', bx3+rowBw/2, nextY+Math.round(planBH*.6));
+        } else {
+          ctx.font='bold '+planPrFS+'px Tajawal,Arial'; ctx.fillStyle='#ffffff';
+          ctx.fillText((p.price||0)+' د.ل', bx3+rowBw/2, nextY+Math.round(planBH*.38));
+        }
+      });
+      nextY+=planBH+(ri<planRows-1?Math.round(gap2*.8):0);
+    }
+    nextY+=divGap;
 
     /* ── description ── */
     if(desc2){
@@ -3880,7 +3900,7 @@ function duplicateSub(id){
 function saveAll(showToast){
   if(!IS_ADMIN) return; /* الزبائن لا يحفظون شيئاً */
   try{
-    var s={DATA:DATA, CL:CL, CATS:CATS, saveMode:SAVE_MODE, customImgData:CUSTOM_IMG_DATA, customImgName:CUSTOM_IMG_NAME, settings:{
+    var s={DATA:DATA, CL:CL, CATS:CATS, saveMode:SAVE_MODE, customImgs:CUSTOM_IMGS, settings:{
       siteName:G('sg-name').value, footerDesc:G('sg-desc').value, offerText:G('sg-offer').value,
       badge:G('sh-badge').value, tagline:G('sh-tagline').value, btn1:G('sh-btn1').value, btn2:G('sh-btn2').value, c1:G('sh-c1').value, c3:G('sh-c3').value,
       waPhone:G('sc-wa').value, ctaTitle:G('sc-ctatitle').value, ctaSub:G('sc-ctasub').value,
@@ -4047,51 +4067,104 @@ function initCatDrag(container){
 /* ════════════════════════
    SAVE MODE (auto vs custom image)
 ════════════════════════ */
-var SAVE_MODE = 'auto';     /* 'auto' | 'custom' */
-var CUSTOM_IMG_DATA = null; /* base64 data URL */
-var CUSTOM_IMG_NAME = '';
+var SAVE_MODE = 'auto';      /* 'auto' | 'custom' */
+var CUSTOM_IMGS = {};         /* { serviceId: { data: base64, name: filename } } */
+var _customImgActiveId = null; /* الخدمة المحددة حالياً في الـ dropdown */
 
 function setSaveMode(mode){
   SAVE_MODE = mode;
   var area = G('custom-img-area');
   if(area) area.style.display = mode==='custom' ? 'block' : 'none';
-  /* highlight selected */
   ['auto','custom'].forEach(function(m){
     var lbl=G('save-mode-lbl-'+m);
     if(lbl) lbl.style.borderColor = m===mode ? 'var(--cyan)' : 'var(--border)';
   });
+  if(mode==='custom') populateCustomImgServiceSelect();
   saveSaveMode();
 }
 
+function populateCustomImgServiceSelect(){
+  var sel=G('custom-img-service'); if(!sel) return;
+  var prev=sel.value;
+  sel.innerHTML='<option value="">— اختر خدمة —</option>';
+  DATA.forEach(function(s){
+    var opt=document.createElement('option');
+    opt.value=s.id;
+    var hasImg=CUSTOM_IMGS[s.id]?' 🖼️':'';
+    opt.textContent=s.name+hasImg;
+    sel.appendChild(opt);
+  });
+  if(prev) sel.value=prev;
+  onCustomImgServiceChange();
+  renderCustomImgsList();
+}
+
+function onCustomImgServiceChange(){
+  var sel=G('custom-img-service'); if(!sel) return;
+  _customImgActiveId = sel.value ? parseInt(sel.value) : null;
+  var inp=G('custom-img-input'); if(inp) inp.value='';
+  if(_customImgActiveId && CUSTOM_IMGS[_customImgActiveId]){
+    var ci=CUSTOM_IMGS[_customImgActiveId];
+    var thumb=G('custom-img-thumb'), prev=G('custom-img-preview'), nm=G('custom-img-name'), clr=G('custom-img-clear');
+    if(thumb) thumb.src=ci.data; if(prev) prev.style.display='block';
+    if(nm) nm.textContent=ci.name||'صورة مخصصة'; if(clr) clr.style.display='';
+  } else {
+    var thumb2=G('custom-img-thumb'), prev2=G('custom-img-preview'), clr2=G('custom-img-clear');
+    if(thumb2) thumb2.src=''; if(prev2) prev2.style.display='none'; if(clr2) clr2.style.display='none';
+  }
+}
+
 function loadCustomImg(input){
+  if(!_customImgActiveId){ toast('⚠️ اختر الخدمة أولاً'); return; }
   var file = input.files[0]; if(!file) return;
   var reader = new FileReader();
   reader.onload = function(e){
-    CUSTOM_IMG_DATA = e.target.result;
-    CUSTOM_IMG_NAME = file.name;
-    var thumb = G('custom-img-thumb'), prev = G('custom-img-preview'), nm = G('custom-img-name');
-    if(thumb){ thumb.src = CUSTOM_IMG_DATA; }
-    if(prev)  prev.style.display = 'block';
-    if(nm)    nm.textContent = file.name;
-    var clr = G('custom-img-clear'); if(clr) clr.style.display='';
+    CUSTOM_IMGS[_customImgActiveId] = { data: e.target.result, name: file.name };
+    var thumb=G('custom-img-thumb'), prev=G('custom-img-preview'), nm=G('custom-img-name'), clr=G('custom-img-clear');
+    if(thumb) thumb.src=e.target.result; if(prev) prev.style.display='block';
+    if(nm) nm.textContent=file.name; if(clr) clr.style.display='';
+    populateCustomImgServiceSelect();
     saveSaveMode();
-    toast('✅ تم رفع الصورة المخصصة');
+    toast('✅ تم رفع الصورة للخدمة المحددة');
   };
   reader.readAsDataURL(file);
 }
 
 function clearCustomImg(){
-  CUSTOM_IMG_DATA = null; CUSTOM_IMG_NAME = '';
-  var thumb=G('custom-img-thumb'), prev=G('custom-img-preview'), clr=G('custom-img-clear');
-  if(thumb) thumb.src=''; if(prev) prev.style.display='none'; if(clr) clr.style.display='none';
-  var inp=G('custom-img-input'); if(inp) inp.value='';
+  if(!_customImgActiveId) return;
+  delete CUSTOM_IMGS[_customImgActiveId];
+  var thumb=G('custom-img-thumb'), prev=G('custom-img-preview'), clr=G('custom-img-clear'), inp=G('custom-img-input');
+  if(thumb) thumb.src=''; if(prev) prev.style.display='none'; if(clr) clr.style.display='none'; if(inp) inp.value='';
+  populateCustomImgServiceSelect();
   saveSaveMode(); toast('🗑️ تم حذف الصورة المخصصة');
+}
+
+function clearCustomImgById(id){
+  delete CUSTOM_IMGS[id];
+  populateCustomImgServiceSelect();
+  saveSaveMode(); toast('🗑️ تم حذف الصورة');
+}
+
+function renderCustomImgsList(){
+  var el=G('custom-imgs-list'); if(!el) return;
+  var keys=Object.keys(CUSTOM_IMGS);
+  if(!keys.length){ el.innerHTML='<div style="font-size:.72rem;color:var(--muted);text-align:center;padding:8px">لا توجد صور مخصصة بعد</div>'; return; }
+  el.innerHTML=keys.map(function(id){
+    var s=null; for(var i=0;i<DATA.length;i++) if(DATA[i].id==id){ s=DATA[i]; break; }
+    if(!s) return '';
+    var ci=CUSTOM_IMGS[id];
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px">'
+      +'<img src="'+ci.data+'" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:.78rem;font-weight:700;color:var(--txt)">'+s.name+'</div><div style="font-size:.66rem;color:var(--muted)">'+ci.name+'</div></div>'
+      +'<button onclick="clearCustomImgById('+id+')" style="width:28px;height:28px;border-radius:50%;background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.25);color:var(--red);font-size:.8rem;cursor:pointer;flex-shrink:0">✕</button>'
+      +'</div>';
+  }).join('');
 }
 
 function saveSaveMode(){
   try{
     var raw=localStorage.getItem(STORE_KEY); var st=raw?JSON.parse(raw):{};
-    st.saveMode=SAVE_MODE; st.customImgData=CUSTOM_IMG_DATA; st.customImgName=CUSTOM_IMG_NAME;
+    st.saveMode=SAVE_MODE; st.customImgs=CUSTOM_IMGS;
     localStorage.setItem(STORE_KEY,JSON.stringify(st));
     pushToCloud(st);
   }catch(e){}
@@ -4100,21 +4173,15 @@ function saveSaveMode(){
 function loadSaveMode(st){
   if(!st) return;
   if(st.saveMode) SAVE_MODE=st.saveMode;
-  if(st.customImgData) CUSTOM_IMG_DATA=st.customImgData;
-  if(st.customImgName) CUSTOM_IMG_NAME=st.customImgName;
+  if(st.customImgs) CUSTOM_IMGS=st.customImgs;
+  /* backward compat: old single image */
+  else if(st.customImgData&&DATA.length){ CUSTOM_IMGS[DATA[0].id]={data:st.customImgData,name:st.customImgName||'صورة'}; }
 }
 
 function applySaveModeUI(){
   if(G('save-mode-auto'))   G('save-mode-auto').checked   = SAVE_MODE==='auto';
   if(G('save-mode-custom')) G('save-mode-custom').checked = SAVE_MODE==='custom';
-  setSaveMode(SAVE_MODE); /* apply visual highlights and show/hide area */
-  if(CUSTOM_IMG_DATA){
-    var thumb=G('custom-img-thumb'), prev=G('custom-img-preview'), nm=G('custom-img-name'), clr=G('custom-img-clear');
-    if(thumb) thumb.src=CUSTOM_IMG_DATA;
-    if(prev)  prev.style.display='block';
-    if(nm)    nm.textContent=CUSTOM_IMG_NAME||'صورة مخصصة';
-    if(clr)   clr.style.display='';
-  }
+  setSaveMode(SAVE_MODE);
 }
 
 function updateLSI(){ try{ var raw=localStorage.getItem(STORE_KEY); G('last-save-info').textContent=raw?'بيانات محفوظة ✅':'لا توجد بيانات محفوظة'; }catch(e){ G('last-save-info').textContent='التخزين غير متاح'; } }
