@@ -2134,15 +2134,21 @@ function applyStateObj(st){
       if(s.ccBdT){ cosmicBadgeType=s.ccBdT; sv('cc-bdt',s.ccBdT); }
       if(typeof s.ccBdV!=='undefined'){ cosmicBadgeVisible=s.ccBdV; G('cc-bdv-track').classList.toggle('on',s.ccBdV); G('cc-bdv-lbl').textContent=s.ccBdV?'مفعّل':'معطّل'; }
       if(s.ccCur){ cosmicCur=s.ccCur; sv('cc-cur',s.ccCur); }
-      if(typeof s.yearlyDiscount !== 'undefined'){
-        yearlyDiscount = parseInt(s.yearlyDiscount)||20;
+    }
+    /* yearlyDiscount و ydBarEnabled تُطبَّق على الجميع (أدمن + زبون) */
+    if(typeof s.yearlyDiscount !== 'undefined'){
+      yearlyDiscount = parseInt(s.yearlyDiscount)||20;
+      if(IS_ADMIN){
         if(G('sg-yd')){ G('sg-yd').value=yearlyDiscount; }
         if(G('sg-yd-num')){ G('sg-yd-num').value=yearlyDiscount; }
         if(G('v-yd')){ G('v-yd').textContent=yearlyDiscount+'%'; }
-        updateSavePct();
       }
-      if(typeof s.ydBarEnabled !== 'undefined'){
-        ydBarEnabled = s.ydBarEnabled;
+      updateSavePct();
+      setTimeout(updateSavePct, 300);
+    }
+    if(typeof s.ydBarEnabled !== 'undefined'){
+      ydBarEnabled = s.ydBarEnabled;
+      if(IS_ADMIN){
         if(G('yd-bar-track')) G('yd-bar-track').classList.toggle('on', ydBarEnabled);
         if(G('yd-bar-lbl')) G('yd-bar-lbl').textContent = ydBarEnabled ? 'مفعّل' : 'معطّل';
       }
