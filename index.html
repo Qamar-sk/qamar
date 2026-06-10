@@ -2692,12 +2692,19 @@ function openMod(id){
   modType=hm?'monthly':'card'; modCardIdx=0;
 
   var cosmicSelected=null, cosmicCardIdx=null;
-  var cosmicBtns=document.querySelectorAll('.cosmic-plan-btn.active[data-sub-id="'+id+'"]');
-  if(cosmicBtns.length>0){
-    var dm=parseInt(cosmicBtns[0].getAttribute('data-months'));
-    var dc=parseInt(cosmicBtns[0].getAttribute('data-card-idx'));
-    if(dm&&dm>0) cosmicSelected=dm;
-    if(!isNaN(dc)&&dc>=0) cosmicCardIdx=dc;
+  var sel=_cosmicSelected[id];
+  if(sel){
+    if(sel.months!==null) cosmicSelected=sel.months;
+    if(sel.cardIdx!==null) cosmicCardIdx=sel.cardIdx;
+  } else {
+    /* fallback: read DOM */
+    var cosmicBtns=document.querySelectorAll('.cosmic-plan-btn.active[data-sub-id="'+id+'"]');
+    if(cosmicBtns.length>0){
+      var dm=parseInt(cosmicBtns[0].getAttribute('data-months'));
+      var dc=parseInt(cosmicBtns[0].getAttribute('data-card-idx'));
+      if(dm&&dm>0) cosmicSelected=dm;
+      if(!isNaN(dc)&&dc>=0) cosmicCardIdx=dc;
+    }
   }
   if(cosmicSelected&&hm){ modMonths=cosmicSelected; }
   else if(cosmicCardIdx!==null&&hc){ modCardIdx=cosmicCardIdx; modType='card'; }
@@ -3541,12 +3548,13 @@ function buildCosmicCard(sub){
 /* ════════════════════════
    SELECT COSMIC PLAN
 ════════════════════════ */
+/* selected plan per sub: { subId: { months, cardIdx } } */
+var _cosmicSelected = {};
+
 function selectCosmicPlan(btn){
   if(!btn) return;
-  // get accent color from settings
   var acc = (typeof cV==='function') ? cV('cc-accent','#7c5fe6') : '#7c5fe6';
   var lm = isLightMode();
-  // deactivate all sibling plan buttons
   var plans = btn.parentNode.querySelectorAll('.cosmic-plan-btn');
   for(var i=0;i<plans.length;i++){
     plans[i].classList.remove('active');
@@ -3554,11 +3562,20 @@ function selectCosmicPlan(btn){
     plans[i].style.background  = lm ? '#f0ecff' : '#0d0828';
     plans[i].style.color       = lm ? '#5a3a90' : '#8878c8';
   }
-  // activate clicked button
   btn.classList.add('active');
   btn.style.borderColor = acc;
   btn.style.background  = lm ? '#e0d8ff' : '#1a1060';
   btn.style.color       = lm ? '#3a10b0' : '#c8b4ff';
+  /* store selection */
+  var subId = parseInt(btn.getAttribute('data-sub-id'));
+  var months = parseInt(btn.getAttribute('data-months'));
+  var cardIdx = parseInt(btn.getAttribute('data-card-idx'));
+  if(subId){
+    _cosmicSelected[subId] = {
+      months: (months&&months>0) ? months : null,
+      cardIdx: (!isNaN(cardIdx)&&cardIdx>=0) ? cardIdx : null
+    };
+  }
 }
 
 function renderCosmic(){
