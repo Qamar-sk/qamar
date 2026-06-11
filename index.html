@@ -466,14 +466,23 @@ footer{background:rgba(4,5,15,.98);border-top:1px solid var(--border);padding:40
   }
   .mod-cl{position:absolute;top:2.5vw;left:2.5vw;width:8vw;height:8vw;min-width:28px;min-height:28px;font-size:3.8vw;z-index:10}
 
-  /* body */
+  /* body: scrollable مع الأزرار ثابتة */
   .mod-body{
-    min-height:0;overflow:hidden;
+    min-height:0;
+    overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
     display:flex;flex-direction:column;
-    padding:.5svh 3.5vw 1.2svh;
+    padding:.5svh 3.5vw 0;
     gap:.4svh;
     background:linear-gradient(to bottom,transparent 0%,rgba(6,4,15,.7) 30%,#06040f 60%);
     position:relative;z-index:10;
+  }
+
+  /* scroll indicator خفيف في الأعلى */
+  .mod-body::before{
+    content:'';position:sticky;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(108,43,217,.4),transparent);
+    display:block;flex-shrink:0;pointer-events:none;z-index:12;margin:0 -3.5vw;
   }
 
   /* اسم */
@@ -486,9 +495,9 @@ footer{background:rgba(4,5,15,.98);border-top:1px solid var(--border);padding:40
   .mod-info-cat{font-size:clamp(.46rem,1.4svh,.6rem);text-align:center;flex:1;color:#5a4a98}
   .mod-info-rating{font-size:clamp(.46rem,1.4svh,.6rem);flex-shrink:0;color:var(--gold)}
 
-  /* باقات */
-  .mod-plans-grid{display:flex;flex-wrap:nowrap;gap:1.2vw;flex-shrink:0;position:relative;z-index:11}
-  .mod-plan-chip{flex:1;min-width:0;padding:.65svh .5vw;border-radius:8px;border-width:1.5px;line-height:1.2;text-align:center}
+  /* باقات: تتكيف مع العدد الكبير */
+  .mod-plans-grid{display:flex;flex-wrap:wrap;gap:1.2vw;flex-shrink:0;position:relative;z-index:11}
+  .mod-plan-chip{flex:1;min-width:clamp(60px,20vw,90px);padding:.65svh .5vw;border-radius:8px;border-width:1.5px;line-height:1.2;text-align:center}
   .mod-plan-chip .mpc-lbl  {font-size:clamp(.48rem,1.5svh,.62rem);display:block;font-weight:800}
   .mod-plan-chip .mpc-orig {font-size:clamp(.4rem,1.2svh,.52rem);display:block;min-height:0}
   .mod-plan-chip .mpc-price{font-size:clamp(.52rem,1.65svh,.68rem);display:block;font-weight:900}
@@ -512,27 +521,34 @@ footer{background:rgba(4,5,15,.98);border-top:1px solid var(--border);padding:40
   .mod-desc-box{padding:.4svh 2vw;border-radius:7px;flex-shrink:0}
   .mod-desc-box p{font-size:clamp(.48rem,1.5svh,.62rem);line-height:1.35;color:#9878cc;margin:0}
 
-  /* الميزات */
+  /* الميزات: تمتد بشكل طبيعي */
   #mod-feats-hd{display:none}
   .mod-feats{
     list-style:none;margin:0;padding:0 1vw;
-    flex:1;min-height:0;overflow:hidden;
-    display:flex;flex-direction:column;justify-content:space-evenly;
+    flex-shrink:0;
+    display:flex;flex-direction:column;gap:.3svh;
   }
   .mod-feats li{
     display:flex;align-items:center;gap:2vw;
     font-size:clamp(.46rem,1.5svh,.62rem);
-    padding:.1svh 0;border-bottom:1px solid #1e1660;
-    flex:1;min-height:0;
+    padding:.4svh 0;border-bottom:1px solid #1e1660;
+    flex-shrink:0;
   }
   .mod-feats li:last-child{border:0}
   .mf-ico{font-size:clamp(.48rem,1.55svh,.64rem);flex-shrink:0}
 
   /* نص الأسفل */
-  .mod-note{font-size:clamp(.38rem,1.1svh,.48rem);text-align:center;flex-shrink:0;margin:0}
+  .mod-note{font-size:clamp(.38rem,1.1svh,.48rem);text-align:center;flex-shrink:0;margin:.4svh 0}
 
-  /* أزرار */
-  .mod-btns{display:flex;flex-shrink:0;gap:1.2vw;flex-wrap:nowrap;margin-top:auto;padding-top:.4svh}
+  /* الأزرار: ثابتة في أسفل الـ body مع fade من الأعلى */
+  .mod-btns{
+    display:flex;flex-shrink:0;gap:1.2vw;flex-wrap:nowrap;
+    position:sticky;bottom:0;
+    background:linear-gradient(to bottom,transparent 0%,#06040f 28%);
+    padding:1.2svh 0 1.4svh;
+    margin-top:auto;
+    z-index:20;
+  }
   .mod-cta{flex:2;padding:1.4svh .8vw;font-size:clamp(.6rem,1.85svh,.78rem);border-radius:10px;white-space:nowrap;font-weight:800}
   .mod-cart{flex:1;padding:1.4svh .8vw;font-size:clamp(.52rem,1.6svh,.68rem);border-radius:10px;white-space:nowrap;font-weight:700}
   .mod-icon-btn{width:clamp(28px,6.5svh,38px);height:clamp(28px,6.5svh,38px);min-width:26px;min-height:26px;border-radius:9px;font-size:clamp(.74rem,2svh,.92rem);flex-shrink:0}
