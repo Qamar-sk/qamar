@@ -1271,105 +1271,148 @@ footer{background:rgba(4,5,15,.98);border-top:1px solid var(--border);padding:40
   color:var(--green);border-color:rgba(0,122,61,.28);
 }
 
-/* ── ADMIN LOGIN SCREEN ── */
+/* ══════════════════════════════
+   ADMIN LOGIN — بناء جديد كامل
+══════════════════════════════ */
 #admin-login-screen{
-  position:fixed;inset:0;z-index:999999;
+  position:fixed;inset:0;
+  z-index:999999;
   background:#04050f;
-  display:none;align-items:center;justify-content:center;
+  display:none;
+  align-items:center;
+  justify-content:center;
   padding:20px;
-  pointer-events:auto;
+  pointer-events:all;
 }
-#admin-login-screen.show{display:flex}
-.al-box{
-  width:min(420px,100%);
-  background:rgba(8,13,30,.98);
-  border:1.5px solid rgba(108,43,217,.4);
-  border-radius:24px;
-  padding:clamp(28px,6vw,44px) clamp(20px,5vw,36px);
-  box-shadow:0 0 60px rgba(108,43,217,.25),0 0 120px rgba(108,43,217,.1);
-  position:relative;overflow:hidden;
+#admin-login-screen.al-visible{
+  display:flex;
 }
-.al-box::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(108,43,217,.18) 0,transparent 70%);
-  pointer-events:none;
+#al-card{
+  width:100%;
+  max-width:400px;
+  background:#0d1021;
+  border:1px solid #3a1f8a;
+  border-radius:20px;
+  padding:36px 28px 28px;
+  box-shadow:0 0 80px rgba(108,43,217,.3);
+  pointer-events:all;
+  position:relative;
+  z-index:1;
 }
-.al-moon{font-size:2.4rem;text-align:center;margin-bottom:6px;filter:drop-shadow(0 0 10px #c8d8ff)}
-.al-logo{font-family:'Cinzel',serif;font-size:1.7rem;font-weight:900;text-align:center;margin-bottom:4px;
-  background:linear-gradient(135deg,#c8d8ff,#6c2bd9,#e040fb);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.al-sub{text-align:center;color:var(--muted);font-size:.78rem;margin-bottom:28px;letter-spacing:1px}
-.al-field{margin-bottom:14px}
-.al-field label{display:block;font-size:.76rem;font-weight:700;color:var(--muted);margin-bottom:6px}
-.al-field input{
-  width:100%;padding:12px 14px;border-radius:12px;
-  border:1.5px solid rgba(108,43,217,.3);
-  background:rgba(108,43,217,.06);
-  color:var(--txt);font-family:inherit;font-size:.94rem;outline:none;
-  transition:border-color .25s;-webkit-appearance:none;
+#al-card .al-icon{font-size:2.2rem;text-align:center;display:block;margin-bottom:4px}
+#al-card .al-title{font-family:'Cinzel',serif;font-size:1.6rem;font-weight:900;text-align:center;color:#c8d8ff;margin-bottom:2px}
+#al-card .al-hint{text-align:center;color:#6a5a9a;font-size:.75rem;margin-bottom:24px}
+#al-card .al-lbl{display:block;font-size:.75rem;font-weight:700;color:#7a6aaa;margin-bottom:5px}
+#al-card .al-inp{
+  width:100%;padding:11px 14px;
+  background:#080c1a;
+  border:1px solid #2a1560;
+  border-radius:10px;
+  color:#e0d8ff;
+  font-size:.93rem;
+  font-family:inherit;
+  outline:none;
+  box-sizing:border-box;
+  -webkit-appearance:none;
+  transition:border-color .2s;
 }
-.al-field input:focus{border-color:var(--pur)}
-.al-pass-wrap{position:relative}
-.al-pass-wrap input{padding-left:42px}
-.al-eye{position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:.9rem;cursor:pointer;padding:4px}
-.al-btn{
-  width:100%;padding:13px;border-radius:14px;border:none;font-family:inherit;font-size:.96rem;font-weight:800;
-  background:linear-gradient(135deg,var(--pur),var(--pink));color:#fff;
-  box-shadow:0 0 24px rgba(108,43,217,.4);cursor:pointer;margin-top:6px;
-  transition:opacity .2s,transform .15s;
+#al-card .al-inp:focus{border-color:#6c2bd9;}
+#al-card .al-pw-wrap{position:relative;}
+#al-card .al-pw-wrap .al-inp{padding-right:42px;}
+#al-card .al-pw-eye{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:#6a5a9a;font-size:.95rem;
+  cursor:pointer;padding:4px;line-height:1;
+  pointer-events:all;
 }
-.al-btn:hover{opacity:.92}.al-btn:active{transform:scale(.97)}
-.al-err{
-  text-align:center;font-size:.78rem;color:var(--red);
-  margin-top:10px;min-height:18px;font-weight:700;
+#al-card .al-group{margin-bottom:14px;}
+#al-card .al-submit{
+  width:100%;margin-top:8px;padding:13px;
+  background:linear-gradient(135deg,#6c2bd9,#c026d3);
+  color:#fff;font-family:inherit;font-size:.95rem;font-weight:800;
+  border:none;border-radius:12px;cursor:pointer;
+  box-shadow:0 0 20px rgba(108,43,217,.5);
+  transition:opacity .2s;
+  pointer-events:all;
 }
-.al-forgot{
-  text-align:center;margin-top:14px;font-size:.76rem;color:var(--muted);
+#al-card .al-submit:hover{opacity:.88}
+#al-card .al-submit:active{opacity:.75}
+#al-card .al-submit:disabled{opacity:.5;cursor:not-allowed}
+#al-err-msg{
+  text-align:center;font-size:.78rem;font-weight:700;
+  color:#ff5252;min-height:20px;margin-top:8px;
 }
-.al-forgot a{color:var(--cyan);text-decoration:none;cursor:pointer;font-weight:700}
-.al-forgot a:hover{text-decoration:underline}
-.al-shake{animation:alShake .4s ease}
-@keyframes alShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
-/* reset panel داخل صندوق الدخول */
-#al-reset-panel{display:none;margin-top:16px;padding-top:16px;border-top:1px solid rgba(108,43,217,.2)}
-#al-reset-panel.show{display:block}
-.al-reset-msg{font-size:.78rem;color:var(--green);text-align:center;margin-top:8px;min-height:16px}
+#al-card .al-fgt{
+  text-align:center;margin-top:12px;font-size:.75rem;color:#5a4a7a;
+}
+#al-card .al-fgt span{
+  color:#5bc8f5;cursor:pointer;font-weight:700;
+}
+#al-card .al-fgt span:hover{text-decoration:underline;}
+#al-reset-box{
+  display:none;margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid #1e1040;
+}
+#al-reset-box.al-open{display:block;}
+#al-reset-msg{
+  text-align:center;font-size:.76rem;margin-top:8px;min-height:16px;color:#00e676;
+}
+@keyframes alShake{
+  0%,100%{transform:translateX(0)}
+  20%,60%{transform:translateX(-8px)}
+  40%,80%{transform:translateX(8px)}
+}
+.al-shake{animation:alShake .4s ease;}
 </style>
 </head>
 <body>
 
 <!-- ════════ ADMIN LOGIN SCREEN ════════ -->
 <div id="admin-login-screen">
-  <div class="al-box" id="al-box">
-    <div class="al-moon">🌙</div>
-    <div class="al-logo">QAMAR</div>
-    <div class="al-sub">لوحة تحكم الأدمن</div>
+  <div id="al-card">
+    <span class="al-icon">🌙</span>
+    <div class="al-title">QAMAR</div>
+    <div class="al-hint">لوحة تحكم الأدمن</div>
 
-    <div class="al-field">
-      <label>اسم المستخدم</label>
-      <input type="text" id="al-user" placeholder="admin" autocomplete="username" autocapitalize="none" spellcheck="false">
+    <div class="al-group">
+      <label class="al-lbl">اسم المستخدم</label>
+      <input class="al-inp" type="text" id="al-user"
+        placeholder="qamar_admin"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false">
     </div>
-    <div class="al-field">
-      <label>كلمة السر</label>
-      <div class="al-pass-wrap">
-        <input type="password" id="al-pass" placeholder="••••••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()">
-        <button class="al-eye" type="button" onclick="togglePassVis()" id="al-eye-btn" title="إظهار/إخفاء">👁</button>
+
+    <div class="al-group">
+      <label class="al-lbl">كلمة السر</label>
+      <div class="al-pw-wrap">
+        <input class="al-inp" type="password" id="al-pass"
+          placeholder="••••••••••••"
+          autocomplete="current-password">
+        <button class="al-pw-eye" id="al-eye-btn" type="button">👁</button>
       </div>
     </div>
-    <button class="al-btn" onclick="doAdminLogin()">دخول ← </button>
-    <div class="al-err" id="al-err"></div>
 
-    <div class="al-forgot">
-      <a onclick="showResetPanel()">نسيت كلمة السر؟</a>
+    <button class="al-submit" id="al-login-btn" type="button">دخول</button>
+    <div id="al-err-msg"></div>
+
+    <div class="al-fgt">
+      <span id="al-fgt-link">نسيت كلمة السر؟</span>
     </div>
 
-    <!-- Reset Panel -->
-    <div id="al-reset-panel">
-      <div class="al-field" style="margin-bottom:10px">
-        <label>البريد الإلكتروني للتحقق</label>
-        <input type="email" id="al-reset-email" placeholder="shtiwem6@gmail.com" autocomplete="email">
+    <div id="al-reset-box">
+      <div class="al-group" style="margin-bottom:10px">
+        <label class="al-lbl">أدخل بريدك الإلكتروني للتحقق</label>
+        <input class="al-inp" type="email" id="al-reset-email"
+          placeholder="shtiwem6@gmail.com"
+          autocomplete="email">
       </div>
-      <button class="al-btn" style="background:linear-gradient(135deg,#00b090,#007060);box-shadow:none" onclick="doSendReset()">إرسال رابط إعادة التعيين 📧</button>
-      <div class="al-reset-msg" id="al-reset-msg"></div>
+      <button class="al-submit" id="al-reset-btn" type="button"
+        style="background:linear-gradient(135deg,#00897b,#00695c)">
+        إرسال كلمة السر الجديدة 📧
+      </button>
+      <div id="al-reset-msg"></div>
     </div>
   </div>
 </div>
@@ -5376,79 +5419,54 @@ updateCartUI=function(){
 function togglePassVis(){
   var inp=G('al-pass'), btn=G('al-eye-btn');
   if(!inp) return;
-  var show = inp.type==='password';
-  inp.type = show ? 'text' : 'password';
-  btn.textContent = show ? '🙈' : '👁';
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  btn.textContent = inp.type==='password' ? '👁' : '🙈';
 }
 
 function showResetPanel(){
-  var p=G('al-reset-panel'); if(!p) return;
-  p.classList.add('show');
+  var p=G('al-reset-box');
+  if(p) p.classList.add('al-open');
 }
 
 async function doAdminLogin(){
-  var userEl=G('al-user'), passEl=G('al-pass'), errEl=G('al-err'), box=G('al-box');
+  var userEl=G('al-user'), passEl=G('al-pass'), errEl=G('al-err-msg'), card=G('al-card');
   if(!userEl||!passEl) return;
-  /* Rate limiting */
   if(!checkRateLimit()){
-    var remaining = Math.ceil((_loginBlockedUntil - Date.now()) / 60000);
-    errEl.textContent = '🔒 تم تجاوز عدد المحاولات. انتظر ' + remaining + ' دقيقة.';
+    var remaining=Math.ceil((_loginBlockedUntil-Date.now())/60000);
+    if(errEl) errEl.textContent='🔒 انتظر '+remaining+' دقيقة';
     return;
   }
-  var user = userEl.value.trim();
-  var pass = passEl.value;
-  errEl.textContent = '';
-  if(!user || !pass){ errEl.textContent = 'أدخل اسم المستخدم وكلمة السر'; return; }
-  /* تأخير مقصود لإبطاء brute force */
-  errEl.textContent = '⏳';
-  await new Promise(function(r){ setTimeout(r, 600); });
-  errEl.textContent = '';
-  var inputHash = await sha256(pass);
-  /* جلب بيانات الدخول من Supabase */
-  var cr = await _loadCreds();
+  var user=userEl.value.trim(), pass=passEl.value;
+  if(errEl) errEl.textContent='';
+  if(!user||!pass){ if(errEl) errEl.textContent='أدخل اسم المستخدم وكلمة السر'; return; }
+  var btn=G('al-login-btn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
+  if(errEl) errEl.textContent='';
+  await new Promise(function(r){ setTimeout(r,600); });
+  var inputHash=await sha256(pass);
+  var cr=await _loadCreds();
   var storedHash, storedUser;
-  if(cr && cr.h){
-    /* بيانات موجودة في Supabase */
-    storedHash = cr.h;
-    storedUser = cr.u || ADMIN_USER_KEY;
-  } else {
-    /* first-run: لا يوجد hash محفوظ بعد — تحقق من الافتراضي محلياً */
-    await initPassHash();
-    storedHash = getStoredPassHash();
-    storedUser = ADMIN_USER_KEY;
-  }
-  /* تحقق من اسم المستخدم */
-  if(user !== storedUser){
+  if(cr&&cr.h){ storedHash=cr.h; storedUser=cr.u||ADMIN_USER_KEY; }
+  else { await initPassHash(); storedHash=getStoredPassHash(); storedUser=ADMIN_USER_KEY; }
+  if(user!==storedUser||!_timingSafeEq(inputHash,storedHash)){
     recordFailedAttempt();
-    box.classList.add('al-shake'); setTimeout(function(){ box.classList.remove('al-shake'); }, 400);
-    errEl.textContent = 'اسم المستخدم أو كلمة السر غير صحيحة';
+    if(card){ card.classList.add('al-shake'); setTimeout(function(){ card.classList.remove('al-shake'); },400); }
+    if(errEl) errEl.textContent='اسم المستخدم أو كلمة السر غير صحيحة';
+    if(btn){ btn.disabled=false; btn.textContent='دخول'; }
     return;
   }
-  /* timing-safe compare */
-  if(!_timingSafeEq(inputHash, storedHash)){
-    recordFailedAttempt();
-    box.classList.add('al-shake'); setTimeout(function(){ box.classList.remove('al-shake'); }, 400);
-    errEl.textContent = 'اسم المستخدم أو كلمة السر غير صحيحة';
-    return;
-  }
-  /* اشتقاق مفتاح التشفير */
   try{
-    var rawKey = user + '\x00' + pass + '\x00' + 'qamar_sk_lby_2026_v3';
-    var keyBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawKey));
-    _EK = Array.from(new Uint8Array(keyBuf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-  }catch(e){ _EK = null; }
-  /* نجح الدخول */
+    var rawKey=user+'\x00'+pass+'\x00qamar_sk_lby_2026_v3';
+    var kb=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(rawKey));
+    _EK=Array.from(new Uint8Array(kb)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  }catch(e){ _EK=null; }
   resetLoginAttempts();
-  /* first-run: احفظ الـ hash في Supabase إذا لم يكن موجوداً */
-  if(!cr || !cr.h){
-    _saveCreds(user, inputHash);
-  }
-  passEl.value = '';
-  userEl.value = '';
+  if(!cr||!cr.h) _saveCreds(user,inputHash);
+  passEl.value=''; userEl.value='';
   createAdminSession();
   _setAdminMode(true);
   _removeAuthGate();
-  G('admin-login-screen').style.display = 'none';
+  G('admin-login-screen').style.display='none';
   initAfterAuth();
 }
 
@@ -5536,7 +5554,7 @@ function _initTabIsolation(){
 }
 
 async function doSendReset(){
-  var emailEl=G('al-reset-email'), msgEl=G('al-reset-msg'), btn=document.querySelector('#al-reset-panel .al-btn');
+  var emailEl=G('al-reset-email'), msgEl=G('al-reset-msg'), btn=G('al-reset-btn');
   if(!emailEl||!msgEl) return;
   var email = emailEl.value.trim().toLowerCase();
   if(email !== RESET_EMAIL.toLowerCase()){ msgEl.style.color='var(--red)'; msgEl.textContent='البريد الإلكتروني غير مطابق'; return; }
@@ -5572,8 +5590,8 @@ async function doSendReset(){
       try{ sessionStorage.removeItem(ADMIN_SESSION_KEY); }catch(e){}
       msgEl.style.color='var(--green)';
       msgEl.textContent='✅ تم إرسال كلمة السر الجديدة إلى ' + RESET_EMAIL;
-      var form = G('al-reset-panel');
-      if(form) setTimeout(function(){ form.classList.remove('show'); },3000);
+      var form = G('al-reset-box');
+      if(form) setTimeout(function(){ form.classList.remove('al-open'); },3000);
     } else {
       throw new Error('send_failed');
     }
@@ -5698,8 +5716,22 @@ async function checkResetToken(){
         var sb=G('settings-btn'); if(sb) sb.style.display='none';
         var ms=G('mod-save-btn'); if(ms) ms.style.display='none';
         var ls=G('admin-login-screen');
-        if(ls){ ls.style.display='flex'; }
-        setTimeout(function(){ var u=G('al-user'); if(u) u.focus(); }, 100);
+        if(ls) ls.style.display='flex';
+
+        /* ربط الأزرار بـ addEventListener — أكثر موثوقية من onclick */
+        var loginBtn = G('al-login-btn');
+        var eyeBtn   = G('al-eye-btn');
+        var fgtLink  = G('al-fgt-link');
+        var resetBtn = G('al-reset-btn');
+        var passInp  = G('al-pass');
+
+        if(loginBtn) loginBtn.addEventListener('click', doAdminLogin);
+        if(eyeBtn)   eyeBtn.addEventListener('click', togglePassVis);
+        if(fgtLink)  fgtLink.addEventListener('click', showResetPanel);
+        if(resetBtn) resetBtn.addEventListener('click', doSendReset);
+        if(passInp)  passInp.addEventListener('keydown', function(e){ if(e.key==='Enter') doAdminLogin(); });
+
+        setTimeout(function(){ var u=G('al-user'); if(u) u.focus(); }, 150);
 
         /* ── MutationObserver: يمنع إخفاء شاشة الدخول بـ DevTools ── */
         try{
