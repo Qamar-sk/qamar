@@ -2244,110 +2244,11 @@ var DL = {
   disney:{bg:'#0063e5',src:'https://cdn.cdnlogo.com/logos/d/70/disney-plus.svg'}
 };
 var CL = {}; // custom logos keyed by sub id
-
-/* ════════════════════════
-   LOGO PERSISTENT CACHE — Supabase + localStorage
-   أول جهاز: يحمّل من CDN ويرفع لـ Supabase
-   كل جهاز بعده: يجلب من Supabase مرة واحدة ويخزن محلياً
-   كل refresh: يقرأ من localStorage فوراً — صفر طلبات
-════════════════════════ */
 var _logoCache = {};
-var _LOGO_LS_KEY  = 'qamar_logo_cache_v1';
-var _LOGO_SB_KEY  = 'logos_v1';
+var _LOGO_LS_KEY = 'qamar_logo_cache_v1';
+var _LOGO_SB_KEY = 'logos_v1';
 
-async function _loadLogosFromSupabase(){
-  try{
-    var res = await sbFetch('qamar_logos?id=eq.'+_LOGO_SB_KEY+'&select=data');
-    if(!res.ok) return null;
-    var rows = await res.json();
-    if(rows && rows[0] && rows[0].data){
-      return JSON.parse(rows[0].data);
-    }
-  }catch(e){}
-  return null;
-}
-
-async function _saveLogosToSupabase(cacheObj){
-  try{
-    var payload = JSON.stringify(cacheObj);
-    /* تحقق إذا كان الصف موجود */
-    var check = await sbFetch('qamar_logos?id=eq.'+_LOGO_SB_KEY+'&select=id');
-    var rows = check.ok ? await check.json() : [];
-    if(rows && rows.length > 0){
-      await sbFetch('qamar_logos?id=eq.'+_LOGO_SB_KEY, {
-        method: 'PATCH',
-        body: JSON.stringify({data: payload, updated_at: new Date().toISOString()})
-      });
-    } else {
-      await sbFetch('qamar_logos', {
-        method: 'POST',
-        body: JSON.stringify({id: _LOGO_SB_KEY, data: payload})
-      });
-    }
-  }catch(e){}
-}
-
-(function(){
-  /* 1. قرأ localStorage فوراً */
-  try{
-    var saved = JSON.parse(localStorage.getItem(_LOGO_LS_KEY) || '{}');
-    if(Object.keys(saved).length > 0){
-      Object.keys(saved).forEach(function(url){ _logoCache[url] = saved[url]; });
-      return; /* كل اللوقوات موجودة محلياً — لا حاجة لأي طلب */
-    }
-  }catch(e){}
-
-  /* 2. localStorage فارغ — جرب Supabase أولاً */
-  _loadLogosFromSupabase().then(function(sbCache){
-    if(sbCache && Object.keys(sbCache).length > 0){
-      /* ✅ موجود في Supabase — خزّن محلياً واستخدمه */
-      Object.keys(sbCache).forEach(function(url){ _logoCache[url] = sbCache[url]; });
-      try{ localStorage.setItem(_LOGO_LS_KEY, JSON.stringify(_logoCache)); }catch(e){}
-      /* أعد رسم الكاردات لتظهر اللوقوات */
-      if(typeof renderCards === 'function') setTimeout(renderCards, 100);
-      return;
-    }
-
-    /* 3. Supabase فارغ — حمّل من CDN وارفع لـ Supabase */
-    var pending = 0;
-    var toFetch = Object.keys(DL).filter(function(k){ return DL[k].src; });
-    if(toFetch.length === 0) return;
-    pending = toFetch.length;
-
-    function onDone(){
-      pending--;
-      if(pending > 0) return;
-      /* كل اللوقوات جاهزة — خزّن محلياً وارفع لـ Supabase */
-      try{ localStorage.setItem(_LOGO_LS_KEY, JSON.stringify(_logoCache)); }catch(e){}
-      _saveLogosToSupabase(_logoCache);
-      if(typeof renderCards === 'function') setTimeout(renderCards, 100);
-    }
-
-    toFetch.forEach(function(k){
-      var d = DL[k];
-      var img = new Image();
-      img.onload = function(){
-        try{
-          var canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth || 128;
-          canvas.height = img.naturalHeight || 128;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          _logoCache[d.src] = canvas.toDataURL('image/png');
-        }catch(e){
-          _logoCache[d.src] = d.src;
-        }
-        onDone();
-      };
-      img.onerror = function(){
-        _logoCache[d.src] = d.src;
-        onDone();
-      };
-      img.crossOrigin = 'anonymous';
-      img.src = d.src;
-    });
-  });
-})();
+/* اللوقوات تُحمَّل بعد تعريف sbFetch — انظر دالة _initLogoCache */
 
 var DATA = [
   {id:1,cat:'ai',logo:'chatgpt',name:'ChatGPT Plus',badge:'pop',bTxt:'الأكثر طلباً',rating:4.9,rev:2340,desc:'نموذج GPT-4o الأقوى للإجابات الاحترافية',serviceType:'monthly',availability:'available',monthlyPrices:[{months:1,price:250,orig:480},{months:3,price:720,orig:1440},{months:12,price:2600,orig:5760}],cardPrices:[],feats:['نموذج GPT-4o','إنشاء صور DALL-E 3','بلا قيود']},
@@ -2587,6 +2488,88 @@ async function sbFetch(path, opts){
   }, opts));
   return res;
 }
+
+/* ════════════════════════
+   LOGO PERSISTENT CACHE — Supabase + localStorage
+════════════════════════ */
+async function _loadLogosFromSupabase(){
+  try{
+    var res = await sbFetch('qamar_logos?id=eq.'+_LOGO_SB_KEY+'&select=data');
+    if(!res.ok) return null;
+    var rows = await res.json();
+    if(rows && rows[0] && rows[0].data) return JSON.parse(rows[0].data);
+  }catch(e){}
+  return null;
+}
+
+async function _saveLogosToSupabase(cacheObj){
+  try{
+    var payload = JSON.stringify(cacheObj);
+    var check = await sbFetch('qamar_logos?id=eq.'+_LOGO_SB_KEY+'&select=id');
+    var rows = check.ok ? await check.json() : [];
+    if(rows && rows.length > 0){
+      await sbFetch('qamar_logos?id=eq.'+_LOGO_SB_KEY, {
+        method: 'PATCH',
+        body: JSON.stringify({data: payload, updated_at: new Date().toISOString()})
+      });
+    } else {
+      await sbFetch('qamar_logos', {
+        method: 'POST',
+        body: JSON.stringify({id: _LOGO_SB_KEY, data: payload})
+      });
+    }
+  }catch(e){}
+}
+
+function _initLogoCache(){
+  /* 1. localStorage فوراً — صفر شبكة */
+  try{
+    var saved = JSON.parse(localStorage.getItem(_LOGO_LS_KEY) || '{}');
+    if(Object.keys(saved).length > 0){
+      Object.keys(saved).forEach(function(url){ _logoCache[url] = saved[url]; });
+      return;
+    }
+  }catch(e){}
+
+  /* 2. Supabase — جهاز جديد */
+  _loadLogosFromSupabase().then(function(sbCache){
+    if(sbCache && Object.keys(sbCache).length > 0){
+      Object.keys(sbCache).forEach(function(url){ _logoCache[url] = sbCache[url]; });
+      try{ localStorage.setItem(_LOGO_LS_KEY, JSON.stringify(_logoCache)); }catch(e){}
+      if(typeof renderCards === 'function') setTimeout(renderCards, 200);
+      return;
+    }
+    /* 3. CDN — أول مرة على الإطلاق */
+    var toFetch = Object.keys(DL).filter(function(k){ return DL[k].src; });
+    var pending = toFetch.length;
+    if(pending === 0) return;
+    function onDone(){
+      pending--;
+      if(pending > 0) return;
+      try{ localStorage.setItem(_LOGO_LS_KEY, JSON.stringify(_logoCache)); }catch(e){}
+      _saveLogosToSupabase(_logoCache);
+      if(typeof renderCards === 'function') setTimeout(renderCards, 200);
+    }
+    toFetch.forEach(function(k){
+      var d = DL[k];
+      var img = new Image();
+      img.onload = function(){
+        try{
+          var canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || 128;
+          canvas.height = img.naturalHeight || 128;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          _logoCache[d.src] = canvas.toDataURL('image/png');
+        }catch(e){ _logoCache[d.src] = d.src; }
+        onDone();
+      };
+      img.onerror = function(){ _logoCache[d.src] = d.src; onDone(); };
+      img.crossOrigin = 'anonymous';
+      img.src = d.src;
+    });
+  });
+}
+window.addEventListener('load', function(){ _initLogoCache(); });
 
 async function pushToCloud(data){
   if(!IS_ADMIN) return;
