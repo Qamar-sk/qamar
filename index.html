@@ -28,7 +28,7 @@
 <!-- AUTO RELOAD: تحديث تلقائي عند رفع نسخة جديدة -->
 <script>
 (function(){
-  var VER = '20260612-006';
+  var VER = '20260612-007';
   var stored = localStorage.getItem('qamar_file_ver');
   if(stored && stored !== VER){
     localStorage.setItem('qamar_file_ver', VER);
@@ -5497,7 +5497,13 @@ function initAfterAuth(){
   try{ renderCards(); }catch(e){}
   try{ applyCardText(); }catch(e){}
   try{ updateCartUI(); }catch(e){}
-  try{ buildAtom(); }catch(e){}
+  /* أعد بناء المدارات بعد حذف الـ gate (الأبعاد صارت صحيحة الآن) + ابدأ الحركة */
+  try{
+    setTimeout(function(){
+      buildAtom();
+      requestAnimationFrame(animateAtom);
+    }, 100);
+  }catch(e){}
   /* تحميل من السحابة في الخلفية */
   setTimeout(function(){
     try{
@@ -5715,6 +5721,8 @@ async function checkResetToken(){
     var sb2=G('settings-btn'); if(sb2) sb2.style.display='';
     var ms2=G('mod-save-btn'); if(ms2) ms2.style.display='';
     var ls2=G('admin-login-screen'); if(ls2) ls2.style.display='none';
+    /* أعد بناء المدارات بعد حذف الـ gate */
+    try{ setTimeout(function(){ buildAtom(); requestAnimationFrame(animateAtom); }, 150); }catch(e){}
     _initTabIsolation();
     _initAutoLock();
     return;
