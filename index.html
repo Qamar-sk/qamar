@@ -28,7 +28,7 @@
 <!-- AUTO RELOAD: تحديث تلقائي عند رفع نسخة جديدة -->
 <script>
 (function(){
-  var VER = '20260612-005';
+  var VER = '20260612-006';
   var stored = localStorage.getItem('qamar_file_ver');
   if(stored && stored !== VER){
     localStorage.setItem('qamar_file_ver', VER);
@@ -5379,33 +5379,6 @@ saveAll=function(showToast){
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(function(){ _saveAllOrig(false); }, 400);
 };
-/* ════════════════════════
-   SECURITY HARDENING
-════════════════════════ */
-(function(){
-  /* ── تعطيل console في وضع الإنتاج لمنع تسريب المعلومات ── */
-  if(window.location.protocol === 'https:'){
-    var noop = function(){};
-    var methods = ['log','debug','info','warn','dir','dirxml','table','trace','group','groupCollapsed','groupEnd','time','timeEnd','profile','profileEnd','assert','clear'];
-    for(var i=0;i<methods.length;i++) console[methods[i]] = noop;
-  }
-
-  /* ── Session integrity check: تحقق دوري كل دقيقة ── */
-  setInterval(function(){
-    if(IS_ADMIN && !isAdminSessionValid()){
-      _setAdminMode(false);
-      destroyAdminSession();
-      toast('⏱ انتهت جلسة الأدمن — تم تسجيل الخروج');
-      setTimeout(function(){ location.reload(); }, 1500);
-    }
-  }, 60000);
-
-  /* ── منع right-click في وضع الزبون فقط ── */
-  if(!IS_ADMIN){
-    document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-  }
-})();
-
 /* ── Cart count in title ── */
 var _updateCartUI=updateCartUI;
 updateCartUI=function(){
@@ -5513,7 +5486,6 @@ function _removeAuthGate(){
 
 function initAfterAuth(){
   _setAdminMode(true);
-  /* إظهار زر الإعدادات وزر حفظ البطاقة */
   var sb=G('settings-btn'); if(sb) sb.style.display='';
   var ms=G('mod-save-btn'); if(ms) ms.style.display='';
   /* تحميل البيانات من localStorage أولاً — فوري */
@@ -5521,26 +5493,31 @@ function initAfterAuth(){
     var local = lsGet(STORE_KEY);
     if(local) applyStateObj(_sanitizeObj(local));
   }catch(e){}
-  buildCatChips(); renderCards(); applyCardText(); updateCartUI(); buildAtom();
+  try{ buildCatChips(); }catch(e){}
+  try{ renderCards(); }catch(e){}
+  try{ applyCardText(); }catch(e){}
+  try{ updateCartUI(); }catch(e){}
+  try{ buildAtom(); }catch(e){}
   /* تحميل من السحابة في الخلفية */
   setTimeout(function(){
-    pullFromCloud().then(function(cloudData){
-      if(!cloudData) return;
-      try{ lsSet(STORE_KEY, cloudData); applyStateObj(_sanitizeObj(cloudData)); }catch(e){}
-      buildCatChips(); renderCards(); applyCardText(); updateCartUI();
-    }).catch(function(){});
-  }, 500);
-  /* تفعيل Tab Isolation */
-  _initTabIsolation();
-  /* تفعيل Auto-Lock عند الخمول */
-  _initAutoLock();
+    try{
+      pullFromCloud().then(function(cloudData){
+        if(!cloudData) return;
+        try{ lsSet(STORE_KEY, cloudData); applyStateObj(_sanitizeObj(cloudData)); buildCatChips(); renderCards(); applyCardText(); updateCartUI(); }catch(e){}
+      }).catch(function(){});
+    }catch(e){}
+  }, 800);
+  try{ _initTabIsolation(); }catch(e){}
+  try{ _initAutoLock(); }catch(e){}
+  try{ initShareLink(); }catch(e){}
   /* مؤشر وضع الأدمن */
-  var ind = document.createElement('div');
-  ind.textContent = '🔐 وضع الأدمن';
-  ind.style.cssText = 'position:fixed;bottom:calc(var(--sb,0px) + 70px);left:50%;transform:translateX(-50%);background:rgba(108,43,217,.85);color:#fff;font-size:.7rem;padding:4px 12px;border-radius:20px;z-index:9000;pointer-events:none;backdrop-filter:blur(8px);font-family:Tajawal,sans-serif;white-space:nowrap;border:1px solid rgba(255,255,255,.15)';
-  document.body.appendChild(ind);
-  setTimeout(function(){ ind.style.opacity='0'; ind.style.transition='opacity 1s'; setTimeout(function(){ if(ind.parentNode) ind.parentNode.removeChild(ind); }, 1000); }, 4000);
-  initShareLink();
+  try{
+    var ind = document.createElement('div');
+    ind.textContent = '🔐 وضع الأدمن';
+    ind.style.cssText = 'position:fixed;bottom:calc(var(--sb,0px) + 70px);left:50%;transform:translateX(-50%);background:rgba(108,43,217,.85);color:#fff;font-size:.7rem;padding:4px 12px;border-radius:20px;z-index:9000;pointer-events:none;backdrop-filter:blur(8px);font-family:Tajawal,sans-serif;white-space:nowrap;border:1px solid rgba(255,255,255,.15)';
+    document.body.appendChild(ind);
+    setTimeout(function(){ ind.style.opacity='0'; ind.style.transition='opacity 1s'; setTimeout(function(){ if(ind.parentNode) ind.parentNode.removeChild(ind); }, 1000); }, 4000);
+  }catch(e){}
 }
 
 /* ════════════════════════
@@ -5756,38 +5733,22 @@ async function checkResetToken(){
     }
   });
 
-  /* ربط الأزرار */
+  /* الأزرار مربوطة بـ onclick في HTML — هنا فقط focus */
   setTimeout(function(){
-    var loginBtn = G('al-login-btn');
-    var eyeBtn   = G('al-eye-btn');
-    var fgtLink  = G('al-fgt-link');
-    var resetBtn = G('al-reset-btn');
-    var passInp  = G('al-pass');
-    var userInp  = G('al-user');
-
-    if(loginBtn) loginBtn.addEventListener('click', doAdminLogin);
-    if(eyeBtn)   eyeBtn.addEventListener('click', togglePassVis);
-    if(fgtLink)  fgtLink.addEventListener('click', showResetPanel);
-    if(resetBtn) resetBtn.addEventListener('click', doSendReset);
-    if(passInp)  passInp.addEventListener('keydown', function(e){ if(e.key==='Enter') doAdminLogin(); });
-    if(userInp)  userInp.addEventListener('keydown', function(e){ if(e.key==='Enter') G('al-pass').focus(); });
-    if(userInp)  userInp.focus();
+    var userInp = G('al-user');
+    if(userInp) userInp.focus();
   }, 200);
 
-  /* Session integrity check كل دقيقة */
+  /* Session integrity check كل دقيقتين — آمن */
   setInterval(function(){
-    if(IS_ADMIN && !isAdminSessionValid()){
-      _setAdminMode(false);
-      destroyAdminSession();
-      location.reload();
-    }
-  }, 60000);
-
-  /* Anti-DevTools: console disabled */
-  if(window.location.protocol === 'https:'){
-    var noop = function(){};
-    ['log','debug','info','warn','error','dir','table','trace','group','groupCollapsed','groupEnd','time','timeEnd','assert','clear'].forEach(function(m){ try{ console[m]=noop; }catch(e){} });
-  }
+    try{
+      if(IS_ADMIN && !isAdminSessionValid()){
+        _setAdminMode(false);
+        destroyAdminSession();
+        var lsx=G('admin-login-screen'); if(lsx) lsx.style.display='flex';
+      }
+    }catch(e){}
+  }, 120000);
 
   /* Right-click disabled for customers */
   document.addEventListener('contextmenu', function(e){ if(!IS_ADMIN) e.preventDefault(); });
